@@ -1,0 +1,26 @@
+# --- General / OS ---
+.DS_Store
+.env
+.env.local
+
+# --- Rails (Backend) ---
+/backend/log/*.log
+/backend/tmp/
+/backend/public/assets
+/backend/config/master.key
+/backend/storage/
+/backend/.bundle/
+/backend/vendor/bundle
+
+# DATABASE SYNC SETTINGS:
+# Uncomment the lines below (remove #) if you do NOT want to sync 
+# your local data between computers.
+# /backend/db/*.sqlite3
+# /backend/db/*.sqlite3-journal
+
+# --- React (Frontend) ---
+/frontend/node_modules/
+/frontend/build/
+/frontend/dist/
+/frontend/.eslintcache
+/frontend/npm-debug.log*
