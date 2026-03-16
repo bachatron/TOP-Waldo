@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  started_at: 2026-03-16 12:40:36
+  completed_at: 2026-03-16 12:40:36
+  player_name: MyString
+  token: MyString
+
+two:
+  started_at: 2026-03-16 12:40:36
+  completed_at: 2026-03-16 12:40:36
+  player_name: MyString
+  token: MyString
