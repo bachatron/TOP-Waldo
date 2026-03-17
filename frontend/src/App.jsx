@@ -1,121 +1,160 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useEffect, useRef } from "react";
+import GameBoard from "./components/GameBoard";
+import CharacterPanel from "./components/CharacterPanel";
+import Timer from "./components/Timer";
+import NameModal from "./components/NameModal";
+import Leaderboard from "./components/Leaderboard";
+import { startGame, checkGuess, completeGame, fetchLeaderboard, fetchCharacters } from "./api";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [characters, setCharacters] = useState([]);
+  const [foundIds, setFoundIds] = useState([]);
+  const [foundMarkers, setFoundMarkers] = useState([]);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const [session, setSession] = useState(null);
+  const [showNameModal, setShowNameModal] = useState(false);
+  const [finalTime, setFinalTime] = useState(null);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [leaderboard, setLeaderboard] = useState([]);
+  const sessionStarting = useRef(false);
+
+  // Fetch characters and start session on mount
+  useEffect(() => {
+    async function init() {
+      if (sessionStarting.current) return;
+      sessionStarting.current = true;
+      try {
+        const [chars, sessionData] = await Promise.all([
+          fetchCharacters(),
+          startGame(),
+        ]);
+        setCharacters(chars);
+        setSession(sessionData);
+      } catch (error) {
+        console.error("Failed to initialize game:", error);
+      }
+    }
+    init();
+  }, []);
+
+  // Check if all characters are found after each guess
+  useEffect(() => {
+    if (characters.length > 0 && foundIds.length === characters.length) {
+      setGameStarted(false);
+      setShowNameModal(true);
+    }
+  }, [foundIds, characters]);
+
+  function handleImageClick() {
+    if (!gameStarted && !showNameModal && !showLeaderboard) {
+      setGameStarted(true);
+    }
+  }
+
+  async function handleGuess(character, x, y, pixelX, pixelY) {
+    if (!session) return;
+    try {
+      const data = await checkGuess(session.id, session.token, character.id, x, y);
+      if (data.correct) {
+        setFeedback({ message: `✅ Found ${character.name}!`, type: "success" });
+        setFoundIds((prev) => [...prev, character.id]);
+        setFoundMarkers((prev) => [...prev, { id: character.id, name: character.name, pixelX, pixelY }]);
+      } else {
+        setFeedback({ message: `❌ Wrong spot, keep looking!`, type: "error" });
+      }
+      setTimeout(() => setFeedback(null), 1500);
+    } catch (error) {
+      console.error("Guess error:", error);
+    }
+  }
+
+  async function handleNameSubmit(playerName) {
+    try {
+      const data = await completeGame(session.id, session.token, playerName);
+      setFinalTime(data.time);  // this was already correct
+      setShowNameModal(false);
+      const entries = await fetchLeaderboard();
+      setLeaderboard(entries);
+      setShowLeaderboard(true);
+    } catch (error) {
+      console.error("Complete game error:", error);
+    }
+  }
+
+  async function handlePlayAgain() {
+    setFoundIds([]);
+    setFoundMarkers([]);
+    setGameStarted(false);
+    setFeedback(null);
+    setShowLeaderboard(false);
+    setFinalTime(null);
+    sessionStarting.current = false;
+    const [chars, sessionData] = await Promise.all([
+      fetchCharacters(),
+      startGame(),
+    ]);
+    setCharacters(chars);
+    setSession(sessionData);
+  }
+
+  // Show a loading state while fetching
+  if (characters.length === 0) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+        <p>Loading game...</p>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div>
+      {/* Header */}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        background: "#0f3460",
+        padding: "0 16px",
+      }}>
+        <h1 style={{ fontSize: "1.2rem" }}>🔍 Where's Waldo?</h1>
+        <CharacterPanel characters={characters} foundIds={foundIds} />
+        <Timer running={gameStarted} />
+      </div>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+      {/* Feedback */}
+      {feedback && (
+        <div style={{
+          textAlign: "center",
+          padding: "8px",
+          background: feedback.type === "success" ? "#2ecc71" : "#e74c3c",
+          color: "white",
+          fontWeight: "bold",
+        }}>
+          {feedback.message}
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {/* Game */}
+      <div style={{ overflowX: "auto" }}>
+        <GameBoard
+          characters={characters}
+          foundMarkers={foundMarkers}
+          foundIds={foundIds}
+          onGuess={handleGuess}
+          onImageClick={handleImageClick}
+        />
+      </div>
+
+      {/* Modals */}
+      {showNameModal && (
+        <NameModal time={finalTime} onSubmit={handleNameSubmit} />
+      )}
+      {showLeaderboard && (
+        <Leaderboard entries={leaderboard} time={finalTime} onPlayAgain={handlePlayAgain} />
+      )}
+    </div>
+  );
 }
 
-export default App
+export default App;
