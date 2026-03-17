@@ -6,6 +6,8 @@ Rails.application.routes.draw do
     end
   end
 
+  get '/characters', to: 'characters#index'
+
   get "up" => "rails/health#show", as: :rails_health_check
   
   get '/leaderboard', to: 'leaderboard#index'

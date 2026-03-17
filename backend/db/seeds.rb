@@ -3,24 +3,32 @@ Character.destroy_all
 Character.create!([
   {
     name: "Waldo",
-    x_min: 0.40,
-    x_max: 0.44,
-    y_min: 0.30,
-    y_max: 0.36
+    x_min: 0.60,
+    x_max: 0.63,
+    y_min: 0.35,
+    y_max: 0.42
   },
   {
-    name: "Wilma",
-    x_min: 0.62,
-    x_max: 0.66,
-    y_min: 0.55,
-    y_max: 0.61
+    name: "Wenda",
+    x_min: 0.76,
+    x_max: 0.78,
+    y_min: 0.38,
+    y_max: 0.44
   },
+  {
+    name: "Odlaw",
+    x_min: 0.09,
+    x_max: 0.12,
+    y_min: 0.33,
+    y_max: 0.40
+  },
+
   {
     name: "Wizard",
-    x_min: 0.21,
-    x_max: 0.25,
-    y_min: 0.70,
-    y_max: 0.76
+    x_min: 0.25,
+    x_max: 0.28,
+    y_min: 0.33,
+    y_max: 0.38
   }
 ])
 
