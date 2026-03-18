@@ -24,18 +24,28 @@ function App() {
     async function init() {
       if (sessionStarting.current) return;
       sessionStarting.current = true;
-      try {
-        const [chars, sessionData] = await Promise.all([
-          fetchCharacters(),
-          startGame(),
-        ]);
-        setCharacters(chars);
-        setSession(sessionData);
-      } catch (error) {
-        console.error("Failed to initialize game:", error);
+      let retries = 5;
+      while (retries > 0) {
+        try {
+          const [chars, sessionData] = await Promise.all([
+            fetchCharacters(),
+            startGame(),
+          ]);
+          setCharacters(chars);
+          setSession(sessionData);
+          return;
+        } catch (error) {
+          retries--;
+          console.log(`Retrying... ${retries} attempts left`);
+          if (retries === 0) {
+            console.error("Failed to initialize game:", error);
+          } else {
+            // Wait 3 seconds before retrying
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+          }
+        }
       }
     }
-    init();
   }, []);
 
   // Check if all characters are found after each guess
@@ -101,8 +111,9 @@ function App() {
   // Show a loading state while fetching
   if (characters.length === 0) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-        <p>Loading game...</p>
+      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", height: "100vh", gap: "16px" }}>
+        <p style={{ fontSize: "1.2rem" }}>⏳ Waking up the server...</p>
+        <p style={{ color: "#aaa", fontSize: "0.9rem" }}>Free tier servers sleep after inactivity. This may take up to 60 seconds.</p>
       </div>
     );
   }
