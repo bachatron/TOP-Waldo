@@ -18,6 +18,7 @@ function App() {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leaderboard, setLeaderboard] = useState([]);
   const sessionStarting = useRef(false);
+  const [initError, setInitError] = useState(null);
 
   // Fetch characters and start session on mount
   useEffect(() => {
@@ -36,13 +37,10 @@ function App() {
           return;
         } catch (error) {
           retries--;
-          console.log(`Retrying... ${retries} attempts left`);
-          if (retries === 0) {
-            console.error("Failed to initialize game:", error);
-          } else {
-            // Wait 3 seconds before retrying
-            await new Promise((resolve) => setTimeout(resolve, 3000));
-          }
+          console.error(`Init error (${retries} retries left):`, error.message);
+          setInitError(error.message);
+          if (retries === 0) return;
+          await new Promise((resolve) => setTimeout(resolve, 3000));
         }
       }
     }
@@ -114,6 +112,11 @@ function App() {
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", height: "100vh", gap: "16px" }}>
         <p style={{ fontSize: "1.2rem" }}>⏳ Waking up the server...</p>
         <p style={{ color: "#aaa", fontSize: "0.9rem" }}>Free tier servers sleep after inactivity. This may take up to 60 seconds.</p>
+        {initError && (
+          <p style={{ color: "#e74c3c", fontSize: "0.85rem", maxWidth: "400px", textAlign: "center" }}>
+            Error: {initError}
+          </p>
+        )}
       </div>
     );
   }
