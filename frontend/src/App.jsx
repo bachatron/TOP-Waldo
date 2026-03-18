@@ -17,33 +17,23 @@ function App() {
   const [finalTime, setFinalTime] = useState(null);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leaderboard, setLeaderboard] = useState([]);
-  const sessionStarting = useRef(false);
   const [initError, setInitError] = useState(null);
 
   // Fetch characters and start session on mount
   useEffect(() => {
     async function init() {
-      if (sessionStarting.current) return;
-      sessionStarting.current = true;
-      let retries = 5;
-      while (retries > 0) {
-        try {
-          const [chars, sessionData] = await Promise.all([
-            fetchCharacters(),
-            startGame(),
-          ]);
-          setCharacters(chars);
-          setSession(sessionData);
-          return;
-        } catch (error) {
-          retries--;
-          console.error(`Init error (${retries} retries left):`, error.message);
-          setInitError(error.message);
-          if (retries === 0) return;
-          await new Promise((resolve) => setTimeout(resolve, 3000));
-        }
+      try {
+        const [chars, sessionData] = await Promise.all([
+          fetchCharacters(),
+          startGame(),
+        ]);
+        setCharacters(chars);
+        setSession(sessionData);
+      } catch (error) {
+        console.error("Failed to initialize game:", error);
       }
     }
+    init();
   }, []);
 
   // Check if all characters are found after each guess
@@ -97,7 +87,6 @@ function App() {
     setFeedback(null);
     setShowLeaderboard(false);
     setFinalTime(null);
-    sessionStarting.current = false;
     const [chars, sessionData] = await Promise.all([
       fetchCharacters(),
       startGame(),
